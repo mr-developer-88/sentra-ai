@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-soc-bg: #030712;
+  --color-soc-panel: #0a0f1d;
+  --color-soc-border: #1e293b;
+  --color-soc-accent: #3b82f6;
+  
+  --color-severity-critical: #f43f5e;
+  --color-severity-high: #f97316;
+  --color-severity-medium: #eab308;
+  --color-severity-low: #10b981;
+}
+
+@layer base {
+  body {
+    @apply bg-soc-bg text-slate-200 antialiased selection:bg-soc-accent/30;
+  }
+  
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-800 rounded-full hover:bg-slate-700;
+  }
+}
+
+.soc-gradient-border {
+  position: relative;
+  border: 1px solid transparent;
+  background: linear-gradient(theme('colors.soc.panel'), theme('colors.soc.panel')) padding-box,
+              linear-gradient(to bottom right, rgba(255,255,255,0.1), rgba(255,255,255,0.02)) border-box;
+}
+
+.glass-panel {
+  @apply bg-white/[0.02] border border-white/[0.05] backdrop-blur-md;
+}

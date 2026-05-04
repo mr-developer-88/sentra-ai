@@ -1,0 +1,101 @@
+{
+  "entities": {
+    "Incident": {
+      "title": "Security Incident",
+      "description": "Represents a security alert that has been triaged by AI.",
+      "type": "object",
+      "properties": {
+        "createdAt": { "type": "string", "format": "date-time" },
+        "source": { "type": "string", "description": "Origin of the alert (e.g., wazuh, generic)" },
+        "rawAlert": { "type": "object", "description": "The original JSON payload" },
+        "aiSummary": { "type": "string", "description": "AI generated incident summary" },
+        "severity": { "type": "number", "description": "Severity score 1-10" },
+        "confidence": { "type": "number", "description": "AI confidence score 0.0-1.0" },
+        "mitreTechniques": { "type": "array", "items": { "type": "string" } },
+        "iocs": { "type": "array", "items": { "type": "string" } },
+        "recommendedActions": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["new", "triaged", "contained", "escalated", "resolved"] },
+        "auditTrail": { 
+          "type": "array", 
+          "items": { 
+            "type": "object",
+            "properties": {
+              "action": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" },
+              "actor": { "type": "string" }
+            }
+          } 
+        },
+        "jiraTicketId": { "type": "string" },
+        "slackNotified": { "type": "boolean" }
+      },
+      "required": ["createdAt", "source", "status"]
+    },
+    "AppNotification": {
+      "title": "Application Notification",
+      "description": "System and security notifications for users.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["incident_new", "triage_complete", "action_executed", "system_status"] },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "severity": { "type": "number" },
+        "incidentId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "read": { "type": "boolean" }
+      },
+      "required": ["userId", "type", "title", "message", "read"]
+    },
+    "IntegrationConfig": {
+      "title": "Integration Configuration",
+      "description": "Store API keys and webhook URLs for third-party services.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "slackWebhook": { "type": "string" },
+        "jiraConfig": {
+          "type": "object",
+          "properties": {
+            "baseUrl": { "type": "string" },
+            "email": { "type": "string" },
+            "apiToken": { "type": "string" },
+            "projectKey": { "type": "string" }
+          }
+        },
+        "wazuhSecretToken": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "UserSettings": {
+      "title": "User Settings",
+      "description": "Global application settings for the organization.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "autopilotMode": { "type": "string", "enum": ["recommend", "autopilot"] },
+        "orgName": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/incidents/{incidentId}": {
+      "schema": "Incident",
+      "description": "Collection of all triaged security incidents."
+    },
+    "/integrations/{userId}": {
+      "schema": "IntegrationConfig",
+      "description": "Private integration settings for each user."
+    },
+    "/settings/{userId}": {
+      "schema": "UserSettings",
+      "description": "Application settings for each user."
+    },
+    "/notifications/{userId}/items/{notificationId}": {
+      "schema": "AppNotification",
+      "description": "Individual notifications for a user."
+    }
+  }
+}

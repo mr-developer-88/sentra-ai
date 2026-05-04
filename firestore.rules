@@ -1,0 +1,99 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      // Basic admin check - for now any verified user can be an admin (or you can add a custom 'admin' claim later)
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Validation Blueprints ---
+
+    function isValidIncident(data) {
+      return data.keys().hasAll(['createdAt', 'source', 'status'])
+        && data.createdAt is timestamp
+        && data.source is string && data.source.size() <= 100
+        && data.status in ['new', 'triaged', 'contained', 'escalated', 'resolved']
+        && (data.severity == null || (data.severity is number && data.severity >= 1 && data.severity <= 10))
+        && (data.confidence == null || (data.confidence is number && data.confidence >= 0 && data.confidence <= 1));
+    }
+
+    function isValidIntegration(data) {
+      return data.keys().hasAll(['userId'])
+        && data.userId == request.auth.uid;
+    }
+
+    function isValidSettings(data) {
+      return data.keys().hasAll(['userId', 'autopilotMode'])
+        && data.userId == request.auth.uid
+        && data.autopilotMode in ['recommend', 'autopilot'];
+    }
+
+    function isValidNotification(data) {
+      return data.keys().hasAll(['userId', 'type', 'title', 'message', 'read'])
+        && data.userId == request.auth.uid
+        && data.type in ['incident_new', 'triage_complete', 'action_executed', 'system_status']
+        && data.title is string && data.title.size() <= 200
+        && data.message is string && data.message.size() <= 1000
+        && data.read is bool;
+    }
+
+    // --- Collection Rules ---
+
+    match /incidents/{incidentId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidIncident(incoming());
+      allow update: if isSignedIn() && (
+        (incoming().diff(existing()).affectedKeys().hasOnly(['status', 'auditTrail', 'severity', 'aiStatus', 'aiSummary', 'mitreTechniques', 'iocs', 'recommendedActions', 'confidence'])) ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /integrations/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isValidIntegration(incoming());
+    }
+
+    match /settings/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(userId) && isValidSettings(incoming());
+    }
+
+    match /notifications/{userId} {
+      allow read: if isOwner(userId);
+      
+      match /items/{notificationId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidNotification(incoming());
+        allow update: if isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}

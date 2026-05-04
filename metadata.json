@@ -1,0 +1,6 @@
+{
+  "name": "SentraAI — SOC Autopilot",
+  "description": "Autonomous SOC platform for alert triage, incident response, and automated security workflows.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
