@@ -6,7 +6,7 @@
 
 This contains everything you need to run your app locally.
 
-View your app in AI Studio: https://ai.studio/apps/b47e7290-cda5-46dc-92b3-fe59eeca25bc
+View your app in AI Studio: [https://ai.studio/apps/b47e7290-cda5-46dc-92b3-fe59eeca25bc](https://sentraai-soc-autopilot-440437281237.asia-southeast1.run.app/)
 
 ## Run Locally
 
